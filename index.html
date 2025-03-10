@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Costura System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f8f8f8;
+    }
+
+    .tabs {
+      display: flex;
+      cursor: pointer;
+      background: #ddd;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      border: 1px solid #ccc;
+      background: #f4f4f4;
+      margin-right: 5px;
+      border-radius: 5px;
+    }
+
+    .tab.active {
+      background: #fff;
+      border-bottom: none;
+    }
+
+    .content {
+      display: none;
+      padding: 20px;
+      border: 1px solid #ccc;
+      background: white;
+      margin-top: -1px;
+      border-radius: 5px;
+    }
+
+    .content.active {
+      display: block;
+    }
+
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-weight: bold;
+    }
+
+    input,
+    select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 200px;
+    }
+
+    button {
+      background: #28a745;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #218838;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: white;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid #ccc;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f4f4f4;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="tabs">
+    <div class="tab active" onclick="showTab(0)">Pedidos</div>
+    <div class="tab" onclick="showTab(1)">Clientes</div>
+    <div class="tab" onclick="showTab(2)">Relatórios</div>
+  </div>
+
+  <div class="content active">
+    <h2>Lista de Pedidos</h2>
+    <form id="orderForm">
+      <label>Cliente:
+        <select id="orderClient"></select>
+      </label>
+      <label>Peça: <input type="text" id="orderPiece"></label>
+      <label>Valor: <input type="text" id="orderValue"></label>
+      <label>Data de Solicitação: <input type="date" id="orderRequestDate"></label>
+      <label>Data de Entrega: <input type="date" id="orderDeliveryDate"></label>
+      <button type="button" onclick="addOrder()">Adicionar Pedido</button>
+    </form>
+    <table id="ordersTable">
+      <tr>
+        <th>Cliente</th>
+        <th>Peça</th>
+        <th>Valor</th>
+        <th>Data de Solicitação</th>
+        <th>Data de Entrega</th>
+      </tr>
+    </table>
+  </div>
+  <div class="content">
+    <h2>Lista de Clientes</h2>
+    <form id="clientForm">
+      <label>Nome: <input type="text" id="clientName"></label>
+      <label>Contato: <input type="text" id="clientContact"></label>
+      <button type="button" onclick="addClient()">Adicionar Cliente</button>
+    </form>
+    <table id="clientsTable">
+      <tr>
+        <th>Nome</th>
+        <th>Contato</th>
+      </tr>
+    </table>
+  </div>
+
+  <div class="content">
+    <h2>Relatórios</h2>
+    <h3>Faturamento por Filtro de Datas</h3>
+    <label>De: <input type="date" id="filterStartDate"></label>
+    <label>Até: <input type="date" id="filterEndDate"></label>
+    <button type="button" onclick="generateFilteredRevenue()">Gerar Faturamento Filtrado</button>
+    <div id="filteredRevenueOutput"></div>
+
+    <h3>Média de Tempo de Entrega</h3>
+    <button type="button" onclick="calculateAverageDelivery()">Calcular Média de Entrega</button>
+    <div id="averageDeliveryOutput"></div>
+  </div>
+
+  <script>
+    function showTab(index) {
+      let tabs = document.querySelectorAll('.tab');
+      let contents = document.querySelectorAll('.content');
+
+      tabs.forEach((tab, i) => {
+        tab.classList.toggle('active', i === index);
+        contents[i].classList.toggle('active', i === index);
+      });
+    }
+
+    function addClient() {
+      let name = document.getElementById('clientName').value;
+      let contact = document.getElementById('clientContact').value.replace(/\D/g, '');
+
+      if (name && contact) {
+        let table = document.getElementById('clientsTable');
+        let row = table.insertRow();
+        row.insertCell(0).innerText = name;
+        row.insertCell(1).innerText = `(${contact.slice(0, 2)}) ${contact.slice(2, 7)}-${contact.slice(7)}`;
+
+        let clientSelect = document.getElementById('orderClient');
+        let option = document.createElement('option');
+        option.value = name;
+        option.innerText = name;
+        clientSelect.appendChild(option);
+
+        document.getElementById('clientForm').reset();
+      }
+      saveClientsToCache()
+    }
+
+    function addOrder() {
+      let client = document.getElementById('orderClient').value;
+      let piece = document.getElementById('orderPiece').value;
+      let value = parseFloat(document.getElementById('orderValue').value.replace(/[^0-9,]/g, '').replace(',', '.'));
+      let requestDate = document.getElementById('orderRequestDate').value;
+      let deliveryDate = document.getElementById('orderDeliveryDate').value;
+
+      if (client && piece && value && requestDate && deliveryDate) {
+        let table = document.getElementById('ordersTable');
+        let row = table.insertRow();
+        row.insertCell(0).innerText = client;
+        row.insertCell(1).innerText = piece;
+        row.insertCell(2).innerText = `R$${value.toFixed(2).replace('.', ',')}`;
+        row.insertCell(3).innerText = requestDate;
+        row.insertCell(4).innerText = deliveryDate;
+
+        document.getElementById('orderForm').reset();
+      }
+      saveOrdersToCache()
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      let clientSelect = document.getElementById('orderClient');
+      let placeholderOption = document.createElement('option');
+      placeholderOption.value = "";
+      placeholderOption.innerText = "Selecione um cliente";
+      placeholderOption.disabled = true;
+      placeholderOption.selected = true;
+      clientSelect.appendChild(placeholderOption);
+    });
+
+    function generateFilteredRevenue() {
+      let startDate = document.getElementById("filterStartDate").value;
+      let endDate = document.getElementById("filterEndDate").value;
+      let ordersTable = document.getElementById("ordersTable");
+      let totalRevenue = 0;
+
+      if (!startDate || !endDate) {
+        alert("Por favor, selecione ambas as datas.");
+        return;
+      }
+
+      for (let i = 1; i < ordersTable.rows.length; i++) {
+        let requestDate = ordersTable.rows[i].cells[3].innerText;
+        let valueCell = ordersTable.rows[i].cells[2].innerText;
+        let numericValue = parseFloat(valueCell.replace("R$", "").replace(",", "."));
+
+        if (requestDate >= startDate && requestDate <= endDate) {
+          totalRevenue += numericValue;
+        }
+      }
+
+      let filteredRevenueOutput = document.getElementById("filteredRevenueOutput");
+      filteredRevenueOutput.innerHTML = `<h4>Total Faturado no Período: R$${totalRevenue.toFixed(2).replace(".", ",")}</h4>`;
+    }
+
+    function calculateAverageDelivery() {
+      let ordersTable = document.getElementById("ordersTable");
+      let totalDays = 0;
+      let orderCount = 0;
+
+      for (let i = 1; i < ordersTable.rows.length; i++) {
+        let requestDate = new Date(ordersTable.rows[i].cells[3].innerText);
+        let deliveryDate = new Date(ordersTable.rows[i].cells[4].innerText);
+
+        if (requestDate && deliveryDate) {
+          let difference = (deliveryDate - requestDate) / (1000 * 60 * 60 * 24);
+          totalDays += difference;
+          orderCount++;
+        }
+      }
+
+      let averageDeliveryOutput = document.getElementById("averageDeliveryOutput");
+      if (orderCount > 0) {
+        let averageDays = totalDays / orderCount;
+        averageDeliveryOutput.innerHTML = `<h4>Média de Tempo de Entrega: ${averageDays.toFixed(1)} dias</h4>`;
+      } else {
+        averageDeliveryOutput.innerHTML = `<h4>Não há pedidos para calcular a média.</h4>`;
+      }
+    }
+
+    function saveOrdersToCache() {
+      let ordersTable = document.getElementById("ordersTable").innerHTML;
+      localStorage.setItem("ordersCache", ordersTable);
+    }
+
+    function loadOrdersFromCache() {
+      let cachedOrders = localStorage.getItem("ordersCache");
+      if (cachedOrders) {
+        document.getElementById("ordersTable").innerHTML = cachedOrders;
+      }
+    }
+
+    function saveClientsToCache() {
+      let clientsTable = document.getElementById("clientsTable").innerHTML;
+      localStorage.setItem("clientsCache", clientsTable);
+    }
+
+    function loadClientsFromCache() {
+      let cachedClients = localStorage.getItem("clientsCache");
+      if (cachedClients) {
+        document.getElementById("clientsTable").innerHTML = cachedClients;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      loadOrdersFromCache();
+      loadClientsFromCache();
+
+      let clientSelect = document.getElementById('orderClient');
+      let placeholderOption = document.createElement('option');
+      placeholderOption.value = "";
+      placeholderOption.innerText = "Selecione um cliente";
+      placeholderOption.disabled = true;
+      placeholderOption.selected = true;
+      clientSelect.appendChild(placeholderOption);
+    });
+
+
+  </script>
+</body>
+
+</html>
