@@ -5,15 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Costura System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
       background: #f8f8f8;
     }
 
     .tabs {
-      display: flex;
       cursor: pointer;
       background: #ddd;
       padding: 10px;
@@ -69,111 +67,111 @@
       border-radius: 5px;
       width: 200px;
     }
-
-    button {
-      background: #28a745;
-      color: white;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      background: #218838;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      background: white;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-
-    table,
-    th,
-    td {
-      border: 1px solid #ccc;
-    }
-
-    th,
-    td {
-      padding: 10px;
-      text-align: left;
-    }
-
-    th {
-      background: #f4f4f4;
-    }
   </style>
 </head>
 
 <body>
-  <header
-    style="background: linear-gradient(90deg, #28a745, #218838); color: white; text-align: center; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
-    <h1 style="margin: 0; font-size: 2.5rem; font-weight: bold; text-transform: uppercase;">Costura System</h1>
-    <h2 style="margin: 5px 0 0; font-size: 1.2rem; font-style: italic;">Controle seu fluxo aqui!</h2>
+  <header class="bg-gradient bg-success text-white text-center py-4 rounded-3 shadow">
+    <h1 class="mb-0 display-4 fw-bold text-uppercase">Costura System</h1>
+    <h2 class="mb-0 fst-italic">Controle seu fluxo aqui!</h2>
   </header>
-  <div class="tabs">
-    <div class="tab active" onclick="showTab(0)">Pedidos</div>
-    <div class="tab" onclick="showTab(1)">Clientes</div>
-    <div class="tab" onclick="showTab(2)">Relatórios</div>
+
+  <div class="container mt-4">
+    <div class="tabs d-flex">
+      <div class="tab active" onclick="showTab(0)">Pedidos</div>
+      <div class="tab" onclick="showTab(1)">Clientes</div>
+      <div class="tab" onclick="showTab(2)">Relatórios</div>
+    </div>
+
+    <div class="content active">
+      <h2 class="mt-3">Lista de Pedidos</h2>
+      <form id="orderForm" class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Cliente:
+            <select id="orderClient" class="form-select"></select>
+          </label>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Peça: <input type="text" id="orderPiece" class="form-control"></label>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Valor: <input type="text" id="orderValue" class="form-control"></label>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Data de Solicitação: <input type="date" id="orderRequestDate"
+              class="form-control"></label>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Data de Entrega: <input type="date" id="orderDeliveryDate"
+              class="form-control"></label>
+        </div>
+        <div class="col-12">
+          <button type="button" onclick="addOrder()" class="btn btn-success">Adicionar Pedido</button>
+        </div>
+      </form>
+      <table id="ordersTable" class="table table-bordered mt-3">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Peça</th>
+            <th>Valor</th>
+            <th>Data de Solicitação</th>
+            <th>Data de Entrega</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="content">
+      <h2 class="mt-3">Lista de Clientes</h2>
+      <form id="clientForm" class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nome: <input type="text" id="clientName" class="form-control"></label>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Contato: <input type="text" id="clientContact" class="form-control"></label>
+        </div>
+        <div class="col-12">
+          <button type="button" onclick="addClient()" class="btn btn-success">Adicionar Cliente</button>
+        </div>
+      </form>
+      <table id="clientsTable" class="table table-bordered mt-3">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Contato</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="content">
+      <h2 class="mt-3">Relatórios</h2>
+      <h3 class="mt-3">Faturamento por Filtro de Datas</h3>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">De: <input type="date" id="filterStartDate" class="form-control"></label>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Até: <input type="date" id="filterEndDate" class="form-control"></label>
+        </div>
+        <div class="col-12">
+          <button type="button" onclick="generateFilteredRevenue()" class="btn btn-primary">Gerar Faturamento
+            Filtrado</button>
+        </div>
+      </div>
+      <div id="filteredRevenueOutput" class="mt-3"></div>
+
+      <h3 class="mt-3">Média de Tempo de Entrega</h3>
+      <button type="button" onclick="calculateAverageDelivery()" class="btn btn-primary">Calcular Média de
+        Entrega</button>
+      <div id="averageDeliveryOutput" class="mt-3"></div>
+    </div>
   </div>
 
-  <div class="content active">
-    <h2>Lista de Pedidos</h2>
-    <form id="orderForm">
-      <label>Cliente:
-        <select id="orderClient"></select>
-      </label>
-      <label>Peça: <input type="text" id="orderPiece"></label>
-      <label>Valor: <input type="text" id="orderValue"></label>
-      <label>Data de Solicitação: <input type="date" id="orderRequestDate"></label>
-      <label>Data de Entrega: <input type="date" id="orderDeliveryDate"></label>
-      <button type="button" onclick="addOrder()">Adicionar Pedido</button>
-    </form>
-    <table id="ordersTable">
-      <tr>
-        <th>Cliente</th>
-        <th>Peça</th>
-        <th>Valor</th>
-        <th>Data de Solicitação</th>
-        <th>Data de Entrega</th>
-      </tr>
-    </table>
-  </div>
-  <div class="content">
-    <h2>Lista de Clientes</h2>
-    <form id="clientForm">
-      <label>Nome: <input type="text" id="clientName"></label>
-      <label>Contato: <input type="text" id="clientContact"></label>
-      <button type="button" onclick="addClient()">Adicionar Cliente</button>
-    </form>
-    <table id="clientsTable">
-      <tr>
-        <th>Nome</th>
-        <th>Contato</th>
-      </tr>
-    </table>
-  </div>
-
-  <div class="content">
-    <h2>Relatórios</h2>
-    <h3>Faturamento por Filtro de Datas</h3>
-    <label>De: <input type="date" id="filterStartDate"></label>
-    <label>Até: <input type="date" id="filterEndDate"></label>
-    <button type="button" onclick="generateFilteredRevenue()">Gerar Faturamento Filtrado</button>
-    <div id="filteredRevenueOutput"></div>
-
-    <h3>Média de Tempo de Entrega</h3>
-    <button type="button" onclick="calculateAverageDelivery()">Calcular Média de Entrega</button>
-    <div id="averageDeliveryOutput"></div>
-  </div>
-
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function showTab(index) {
       let tabs = document.querySelectorAll('.tab');
@@ -190,7 +188,7 @@
       let contact = document.getElementById('clientContact').value.replace(/\D/g, '');
 
       if (name && contact) {
-        let table = document.getElementById('clientsTable');
+        let table = document.getElementById('clientsTable').querySelector('tbody');
         let row = table.insertRow();
         row.insertCell(0).innerText = name;
         row.insertCell(1).innerText = `(${contact.slice(0, 2)}) ${contact.slice(2, 7)}-${contact.slice(7)}`;
@@ -214,7 +212,7 @@
       let deliveryDate = document.getElementById('orderDeliveryDate').value;
 
       if (client && piece && value && requestDate && deliveryDate) {
-        let table = document.getElementById('ordersTable');
+        let table = document.getElementById('ordersTable').querySelector('tbody');
         let row = table.insertRow();
         row.insertCell(0).innerText = client;
         row.insertCell(1).innerText = piece;
@@ -240,7 +238,7 @@
     function generateFilteredRevenue() {
       let startDate = document.getElementById("filterStartDate").value;
       let endDate = document.getElementById("filterEndDate").value;
-      let ordersTable = document.getElementById("ordersTable");
+      let ordersTable = document.getElementById("ordersTable").querySelector('tbody');
       let totalRevenue = 0;
 
       if (!startDate || !endDate) {
@@ -248,7 +246,7 @@
         return;
       }
 
-      for (let i = 1; i < ordersTable.rows.length; i++) {
+      for (let i = 0; i < ordersTable.rows.length; i++) {
         let requestDate = ordersTable.rows[i].cells[3].innerText;
         let valueCell = ordersTable.rows[i].cells[2].innerText;
         let numericValue = parseFloat(valueCell.replace("R$", "").replace(",", "."));
@@ -263,11 +261,11 @@
     }
 
     function calculateAverageDelivery() {
-      let ordersTable = document.getElementById("ordersTable");
+      let ordersTable = document.getElementById("ordersTable").querySelector('tbody');
       let totalDays = 0;
       let orderCount = 0;
 
-      for (let i = 1; i < ordersTable.rows.length; i++) {
+      for (let i = 0; i < ordersTable.rows.length; i++) {
         let requestDate = new Date(ordersTable.rows[i].cells[3].innerText);
         let deliveryDate = new Date(ordersTable.rows[i].cells[4].innerText);
 
@@ -288,26 +286,26 @@
     }
 
     function saveOrdersToCache() {
-      let ordersTable = document.getElementById("ordersTable").innerHTML;
+      let ordersTable = document.getElementById("ordersTable").querySelector('tbody').innerHTML;
       localStorage.setItem("ordersCache", ordersTable);
     }
 
     function loadOrdersFromCache() {
       let cachedOrders = localStorage.getItem("ordersCache");
       if (cachedOrders) {
-        document.getElementById("ordersTable").innerHTML = cachedOrders;
+        document.getElementById("ordersTable").querySelector('tbody').innerHTML = cachedOrders;
       }
     }
 
     function saveClientsToCache() {
-      let clientsTable = document.getElementById("clientsTable").innerHTML;
+      let clientsTable = document.getElementById("clientsTable").querySelector('tbody').innerHTML;
       localStorage.setItem("clientsCache", clientsTable);
     }
 
     function loadClientsFromCache() {
       let cachedClients = localStorage.getItem("clientsCache");
       if (cachedClients) {
-        document.getElementById("clientsTable").innerHTML = cachedClients;
+        document.getElementById("clientsTable").querySelector('tbody').innerHTML = cachedClients;
       }
     }
 
@@ -323,8 +321,6 @@
       placeholderOption.selected = true;
       clientSelect.appendChild(placeholderOption);
     });
-
-
   </script>
 </body>
 
