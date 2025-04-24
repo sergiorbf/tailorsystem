@@ -193,15 +193,10 @@
         row.insertCell(0).innerText = name;
         row.insertCell(1).innerText = `(${contact.slice(0, 2)}) ${contact.slice(2, 7)}-${contact.slice(7)}`;
 
-        let clientSelect = document.getElementById('orderClient');
-        let option = document.createElement('option');
-        option.value = name;
-        option.innerText = name;
-        clientSelect.appendChild(option);
-
         document.getElementById('clientForm').reset();
       }
-      saveClientsToCache()
+      saveClientsToCache();
+      loadClientsIntoSelect();
     }
 
     function addOrder() {
@@ -222,18 +217,8 @@
 
         document.getElementById('orderForm').reset();
       }
-      saveOrdersToCache()
+      saveOrdersToCache();
     }
-
-    document.addEventListener("DOMContentLoaded", function () {
-      let clientSelect = document.getElementById('orderClient');
-      let placeholderOption = document.createElement('option');
-      placeholderOption.value = "";
-      placeholderOption.innerText = "Selecione um cliente";
-      placeholderOption.disabled = true;
-      placeholderOption.selected = true;
-      clientSelect.appendChild(placeholderOption);
-    });
 
     function generateFilteredRevenue() {
       let startDate = document.getElementById("filterStartDate").value;
@@ -298,28 +283,54 @@
     }
 
     function saveClientsToCache() {
-      let clientsTable = document.getElementById("clientsTable").querySelector('tbody').innerHTML;
-      localStorage.setItem("clientsCache", clientsTable);
+      let clients = [];
+      let clientsTable = document.getElementById("clientsTable").querySelector('tbody').rows;
+      for (let row of clientsTable) {
+        clients.push({ name: row.cells[0].innerText, contact: row.cells[1].innerText });
+      }
+      localStorage.setItem("clientsCache", JSON.stringify(clients));
     }
 
     function loadClientsFromCache() {
       let cachedClients = localStorage.getItem("clientsCache");
       if (cachedClients) {
-        document.getElementById("clientsTable").querySelector('tbody').innerHTML = cachedClients;
+        let clients = JSON.parse(cachedClients);
+        let table = document.getElementById("clientsTable").querySelector('tbody');
+        table.innerHTML = "";
+        for (let client of clients) {
+          let row = table.insertRow();
+          row.insertCell(0).innerText = client.name;
+          row.insertCell(1).innerText = client.contact;
+        }
       }
+      loadClientsIntoSelect();
     }
-
-    document.addEventListener("DOMContentLoaded", function () {
-      loadOrdersFromCache();
-      loadClientsFromCache();
-
+    function loadClientsIntoSelect() {
       let clientSelect = document.getElementById('orderClient');
+      clientSelect.innerHTML = "";
       let placeholderOption = document.createElement('option');
       placeholderOption.value = "";
       placeholderOption.innerText = "Selecione um cliente";
       placeholderOption.disabled = true;
       placeholderOption.selected = true;
       clientSelect.appendChild(placeholderOption);
+
+      let cachedClients = localStorage.getItem("clientsCache");
+      if (cachedClients) {
+        let clients = JSON.parse(cachedClients);
+        for (let client of clients) {
+          let option = document.createElement('option');
+          option.value = client.name;
+          option.innerText = client.name;
+          clientSelect.appendChild(option);
+        }
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      loadOrdersFromCache();
+      loadClientsFromCache();
+      loadClientsIntoSelect();
     });
   </script>
 </body>
