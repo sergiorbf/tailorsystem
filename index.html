@@ -183,41 +183,94 @@
       });
     }
 
-    function addClient() {
-      let name = document.getElementById('clientName').value;
-      let contact = document.getElementById('clientContact').value.replace(/\D/g, '');
+    async function addClient() {
+      const name = document.getElementById('clientName').value;
+      const contact = document.getElementById('clientContact').value.replace(/\D/g, '');
 
-      if (name && contact) {
-        let table = document.getElementById('clientsTable').querySelector('tbody');
-        let row = table.insertRow();
-        row.insertCell(0).innerText = name;
-        row.insertCell(1).innerText = `(${contact.slice(0, 2)}) ${contact.slice(2, 7)}-${contact.slice(7)}`;
+      if (!name || !contact) return;
 
+      const response = await fetch('http://localhost:3001/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, contact })
+      });
+
+      if (response.ok) {
         document.getElementById('clientForm').reset();
+        await loadClientsFromDB();
+      } else {
+        alert('Erro ao cadastrar cliente');
       }
-      saveClientsToCache();
-      loadClientsIntoSelect();
     }
 
-    function addOrder() {
-      let client = document.getElementById('orderClient').value;
-      let piece = document.getElementById('orderPiece').value;
-      let value = parseFloat(document.getElementById('orderValue').value.replace(/[^0-9,]/g, '').replace(',', '.'));
-      let requestDate = document.getElementById('orderRequestDate').value;
-      let deliveryDate = document.getElementById('orderDeliveryDate').value;
+    async function addOrder() {
+      const client = document.getElementById('orderClient').value;
+      const piece = document.getElementById('orderPiece').value;
+      const value = parseFloat(document.getElementById('orderValue').value.replace(/[^0-9,]/g, '').replace(',', '.'));
+      const request_date = document.getElementById('orderRequestDate').value;
+      const delivery_date = document.getElementById('orderDeliveryDate').value;
 
-      if (client && piece && value && requestDate && deliveryDate) {
-        let table = document.getElementById('ordersTable').querySelector('tbody');
-        let row = table.insertRow();
-        row.insertCell(0).innerText = client;
-        row.insertCell(1).innerText = piece;
-        row.insertCell(2).innerText = `R$${value.toFixed(2).replace('.', ',')}`;
-        row.insertCell(3).innerText = requestDate;
-        row.insertCell(4).innerText = deliveryDate;
+      if (!client || !piece || isNaN(value) || !request_date || !delivery_date) return;
 
+      const response = await fetch('http://localhost:3001/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_name: client, piece, value, request_date, delivery_date })
+      });
+
+      if (response.ok) {
         document.getElementById('orderForm').reset();
+        await loadOrdersFromDB();
+      } else {
+        alert('Erro ao cadastrar pedido');
       }
-      saveOrdersToCache();
+    }
+
+    async function loadClientsFromDB() {
+      const response = await fetch('http://localhost:3001/clients');
+      const clients = await response.json();
+
+      const table = document.getElementById("clientsTable").querySelector('tbody');
+      table.innerHTML = "";
+
+      const clientSelect = document.getElementById('orderClient');
+      clientSelect.innerHTML = "";
+
+      const placeholderOption = document.createElement('option');
+      placeholderOption.value = "";
+      placeholderOption.text = "Selecione um cliente";
+      placeholderOption.disabled = true;
+      placeholderOption.selected = true;
+      clientSelect.appendChild(placeholderOption);
+
+      clients.forEach(client => {
+        const row = table.insertRow();
+        row.insertCell(0).innerText = client.name;
+        row.insertCell(1).innerText = client.contact;
+
+        const option = document.createElement('option');
+        option.value = client.name;
+        option.text = client.name;
+        clientSelect.appendChild(option);
+      });
+    }
+
+
+    async function loadOrdersFromDB() {
+      const response = await fetch('http://localhost:3001/orders');
+      const orders = await response.json();
+
+      const table = document.getElementById("ordersTable").querySelector('tbody');
+      table.innerHTML = "";
+
+      orders.forEach(order => {
+        const row = table.insertRow();
+        row.insertCell(0).innerText = order.client_name;
+        row.insertCell(1).innerText = order.piece;
+        row.insertCell(2).innerText = `R$${parseFloat(order.value).toFixed(2).replace('.', ',')}`;
+        row.insertCell(3).innerText = order.request_date.slice(0, 10);
+        row.insertCell(4).innerText = order.delivery_date.slice(0, 10);
+      });
     }
 
     function generateFilteredRevenue() {
@@ -270,67 +323,9 @@
       }
     }
 
-    function saveOrdersToCache() {
-      let ordersTable = document.getElementById("ordersTable").querySelector('tbody').innerHTML;
-      localStorage.setItem("ordersCache", ordersTable);
-    }
-
-    function loadOrdersFromCache() {
-      let cachedOrders = localStorage.getItem("ordersCache");
-      if (cachedOrders) {
-        document.getElementById("ordersTable").querySelector('tbody').innerHTML = cachedOrders;
-      }
-    }
-
-    function saveClientsToCache() {
-      let clients = [];
-      let clientsTable = document.getElementById("clientsTable").querySelector('tbody').rows;
-      for (let row of clientsTable) {
-        clients.push({ name: row.cells[0].innerText, contact: row.cells[1].innerText });
-      }
-      localStorage.setItem("clientsCache", JSON.stringify(clients));
-    }
-
-    function loadClientsFromCache() {
-      let cachedClients = localStorage.getItem("clientsCache");
-      if (cachedClients) {
-        let clients = JSON.parse(cachedClients);
-        let table = document.getElementById("clientsTable").querySelector('tbody');
-        table.innerHTML = "";
-        for (let client of clients) {
-          let row = table.insertRow();
-          row.insertCell(0).innerText = client.name;
-          row.insertCell(1).innerText = client.contact;
-        }
-      }
-      loadClientsIntoSelect();
-    }
-    function loadClientsIntoSelect() {
-      let clientSelect = document.getElementById('orderClient');
-      clientSelect.innerHTML = "";
-      let placeholderOption = document.createElement('option');
-      placeholderOption.value = "";
-      placeholderOption.innerText = "Selecione um cliente";
-      placeholderOption.disabled = true;
-      placeholderOption.selected = true;
-      clientSelect.appendChild(placeholderOption);
-
-      let cachedClients = localStorage.getItem("clientsCache");
-      if (cachedClients) {
-        let clients = JSON.parse(cachedClients);
-        for (let client of clients) {
-          let option = document.createElement('option');
-          option.value = client.name;
-          option.innerText = client.name;
-          clientSelect.appendChild(option);
-        }
-      }
-    }
-
     document.addEventListener("DOMContentLoaded", function () {
-      loadOrdersFromCache();
-      loadClientsFromCache();
-      loadClientsIntoSelect();
+      loadClientsFromDB();
+      loadOrdersFromDB();
     });
   </script>
 </body>
